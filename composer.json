@@ -1,9 +1,15 @@
 {
-  "name"   : "infira/adaptive-image",
-  "authors": [
+  "name"    : "infira/adaptive-image",
+  "authors" : [
 	{
 	  "name" : "Gen Taliaru",
 	  "email": "gen@infira.ee"
 	}
-  ]
+  ],
+  "autoload": {
+	"psr-4": {
+	  "Infira\\AdaptiveImage\\": "src/"
+	}
+  }
+
 }

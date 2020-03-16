@@ -1,6 +1,6 @@
 <?php
 
-namespace Infira;
+namespace Infira\AdaptiveImage;
 class AdaptiveImage
 {
 	private $cachePath      = NULL;   // where to store the generated re-sized images. Specify from your document root!
