@@ -1,15 +1,14 @@
 {
-  "name"    : "gentaliaru/adaptive-image",
-  "authors" : [
-	{
-	  "name" : "Gen Taliaru",
-	  "email": "gen@infira.ee"
-	}
-  ],
+  "name"    : "infira/adaptive-image",
   "autoload": {
 	"psr-4": {
 	  "Infira\\": "src/"
 	}
   },
-  "require" : { }
+  "authors" : [
+	{
+	  "name" : "Gen Taliaru",
+	  "email": "gen@infira.ee"
+	}
+  ]
 }
