@@ -6,7 +6,7 @@ ini_set('display_errors', TRUE);
 ini_set('display_startup_errors', TRUE);
 
 
-require_once "../src/AdaptiveImage.class.php";
+require_once "../src/AdaptiveImage.php";
 $Ai = new \Infira\AdaptiveImage\AdaptiveImage();
 $Ai->setConfig($_GET);
 $Ai->setBasePath(__DIR__);
