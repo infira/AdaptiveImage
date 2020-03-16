@@ -484,7 +484,7 @@ class AdaptiveImage
 		
 		$format               = strtolower($this->Image->getImageFormat());
 		$this->finalExtension = $format;
-		if (in_array($format, ["jpg", "jpeg"]))
+		if (in_array($format, ['jpg', 'jpeg', 'webp']))
 		{
 			$this->Image->setImageCompression(\Imagick::COMPRESSION_JPEG);
 			$this->Image->setImageCompressionQuality($this->getParam("quality"));
@@ -495,6 +495,10 @@ class AdaptiveImage
 			//$this->Image->setInterlaceScheme(\Imagick::INTERLACE_PLANE);
 			$this->Image->setSamplingFactors(['2x2', '1x1', '1x1']); //https://stackoverflow.com/questions/27132047/how-can-i-save-a-jpg-image-in-420-colorspace-with-imagick
 			$this->finalExtension = "jpg";
+			if ($format == 'webp')
+			{
+				$this->Image->setImageFormat('jpeg');
+			}
 			
 		}
 		elseif ($format == "png")
