@@ -238,6 +238,17 @@ class AdaptiveImage
 				}
 			}
 		}
+		if ($params["width"] == "auto" AND $params["height"] == "auto")
+		{
+			if (!isset($params['size']))
+			{
+				$this->sendError("size parameter is not defined, or width,heigh");
+			}
+			else
+			{
+				$this->sendError("width and height cannot be auto at the same time");
+			}
+		}
 		$params["quality"] = preg_replace("/[^0-9]/", "", $params["quality"]);
 		foreach ($params as $n => $v)
 		{
