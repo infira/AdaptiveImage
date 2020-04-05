@@ -91,7 +91,10 @@ class AdaptiveImage
 					unlink($this->getFinalPath());
 					$this->draw();
 				}
-				$this->Image = new \Imagick($this->getFinalPath());
+				else
+				{
+					$this->Image = new \Imagick($this->getFinalPath());
+				}
 			}
 		}
 		
