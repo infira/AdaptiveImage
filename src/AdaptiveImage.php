@@ -928,7 +928,7 @@ class AdaptiveImage
 		$len  = strlen($path) - 1;
 		if ($len > 0)
 		{
-			if ($path{$len} != DIRECTORY_SEPARATOR and !is_file($path))
+			if ($path{$len} != DIRECTORY_SEPARATOR)
 			{
 				$path .= DIRECTORY_SEPARATOR;
 			}
