@@ -746,6 +746,7 @@ class AdaptiveImage
 		
 		$info            = (object)(pathinfo($destFileName));
 		$this->finalPath = $this->fixPath($info->dirname) . $info->filename . ".%extension%";
+		$this->finalPath = str_replace('../', '', $this->finalPath); //cant go back in directory
 	}
 	
 	public function getFinalPath()
