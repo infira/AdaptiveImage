@@ -3,7 +3,7 @@
 namespace Infira\AdaptiveImage;
 class AdaptiveImage
 {
-	private $cachePath      = NULL;   // where to store the generated re-sized images. Specify from your document root!
+	private $cachePath      = null;   // where to store the generated re-sized images. Specify from your document root!
 	private $browserCache   = 604800; // How long the BROWSER cache should last (seconds, minutes, hours, days. 7days by default)
 	private $params         = [];     //User params
 	private $finalPath      = "";
@@ -17,16 +17,16 @@ class AdaptiveImage
 	
 	
 	private $basePath = "";
-	private $srcFile  = NULL; //Source file full location
+	private $srcFile  = null; //Source file full location
 	/**
 	 * @var Imagick
 	 */
-	private $Image = FALSE;
+	private $Image = false;
 	
 	private $fileName = "";
 	private $Size     = "";
 	
-	public function make($src = FALSE, $config = NULL, $cachePath = FALSE)
+	public function make($src = false, $config = null, $cachePath = false)
 	{
 		$this->setConfig($config);
 		$this->setCachePath($cachePath);
@@ -44,12 +44,12 @@ class AdaptiveImage
 		{
 			return $this->sendError("Source file not found : " . $this->srcFile);
 		}
-		if (!is_readable($this->srcFile) OR !is_file($this->srcFile))
+		if (!is_readable($this->srcFile) or !is_file($this->srcFile))
 		{
 			return $this->sendError("File is not readable or is not and file : " . $this->srcFile);
 		}
 		
-		if (strpos(mime_content_type($this->srcFile), "image") === FALSE)
+		if (strpos(mime_content_type($this->srcFile), "image") === false)
 		{
 			return $this->sendError("File is not image : " . $this->srcFile);
 		}
@@ -64,10 +64,10 @@ class AdaptiveImage
 		
 		if (!$this->getParam("generate"))
 		{
-			return FALSE;
+			return false;
 		}
 		
-		if ($this->getParam("forceCache") == TRUE && file_exists($this->getFinalPath()))
+		if ($this->getParam("forceCache") == true && file_exists($this->getFinalPath()))
 		{
 			unlink($this->getFinalPath());
 		}
@@ -121,9 +121,9 @@ class AdaptiveImage
 		}
 	}
 	
-	public function setConfig($config, $value = NULL)
+	public function setConfig($config, $value = null)
 	{
-		if (is_string($config) && $value !== NULL)
+		if (is_string($config) && $value !== null)
 		{
 			$this->params[$config] = $value;
 			
@@ -131,7 +131,7 @@ class AdaptiveImage
 		}
 		if (!$config)
 		{
-			return FALSE;
+			return false;
 		}
 		if (is_object($config))
 		{
@@ -164,10 +164,10 @@ class AdaptiveImage
 		$default["width"]            = "auto";
 		$default["height"]           = "auto";
 		$default["quality"]          = 80;
-		$default["forceCache"]       = FALSE;
-		$default["removeWhiteSpace"] = FALSE;
-		$default["generate"]         = TRUE;
-		$default["fit"]              = FALSE; //Final image must be exacty the $width and height width backgrounds
+		$default["forceCache"]       = false;
+		$default["removeWhiteSpace"] = false;
+		$default["generate"]         = true;
+		$default["fit"]              = false; //Final image must be exacty the $width and height width backgrounds
 		
 		/*
 		 * fitc = fit coordinates xy
@@ -181,38 +181,37 @@ class AdaptiveImage
 		 */
 		$default["fitc"] = "cm";
 		
-		$default["bg"]                   = FALSE; //Used only in fit
-		$default["debug"]                = FALSE; //Image will not send to browser
-		$default["centerWaterMark"]      = FALSE;
-		$default["coverWaterMarks"]      = FALSE;
-		$default["writeFile"]            = TRUE;
+		$default["bg"]                   = false; //Used only in fit
+		$default["debug"]                = false; //Image will not send to browser
+		$default["centerWaterMark"]      = false;
+		$default["coverWaterMarks"]      = false;
+		$default["writeFile"]            = true;
 		$default["destFileName"]         = "";
-		$default["sendToBrowser"]        = TRUE;
-		$default["voidRemoveWhiteSpace"] = FALSE;
-		$default["blur"]                 = FALSE;
+		$default["sendToBrowser"]        = true;
+		$default["voidRemoveWhiteSpace"] = false;
+		$default["blur"]                 = false;
 		$default["bds"]                  = "";    //base dir suffix
 		$default["usd"]                  = "w";   //Use picture size in dir, w = width, h = height, both together can be used as well
-		$default["cropas"]               = FALSE; //crop image after scaling
+		$default["cropas"]               = false; //crop image after scaling
 		
 		$params = array_merge($default, $configArr);
 		
 		if (array_key_exists("size", $params))
 		{
 			$s = explode("x", strtolower($params["size"]));
+			if (count($s) > 2)
+			{
+				$this->sendError('size paramater must be $numberx$number');
+			}
 			if (!isset($s[1]))
 			{
 				$s[1] = 0;
 			}
 			$params["width"]  = trim($s[0]);
 			$params['height'] = trim($s[1]);
-			
-			if ($params["width"] != "auto")
+			if ((!is_numeric($params['width']) and $params['width'] != 'auto') or (!is_numeric($params['height']) and $params['height'] != 'auto'))
 			{
-				$params["width"] = preg_replace("/[^0-9]/", "", $params["width"]);//https://stackoverflow.com/questions/33993461/php-remove-all-non-numeric-characters-from-a-string
-			}
-			if ($params['height'] != "auto")
-			{
-				$params["height"] = preg_replace("/[^0-9]/", "", $params['height']);
+				$this->sendError('size paramater must be $numberx$number');
 			}
 		}
 		$params["quality"] = preg_replace("/[^0-9]/", "", $params["quality"]);
@@ -241,7 +240,7 @@ class AdaptiveImage
 				}
 			}
 		}
-		if ($params["width"] == "auto" AND $params["height"] == "auto")
+		if ($params["width"] == "auto" and $params["height"] == "auto")
 		{
 			if (!isset($params['size']))
 			{
@@ -257,13 +256,13 @@ class AdaptiveImage
 		{
 			if (in_array($n, ["forceCache", "fit", "debug", "generate", "removeWhiteSpace", "centerWaterMark", "coverWaterMarks", "writeFile", "sendToBrowser", "voidRemoveWhiteSpace", "blur", "hdir"]))
 			{
-				if ($v === "0" OR $v === "false")
+				if ($v === "0" or $v === "false")
 				{
-					$v = FALSE;
+					$v = false;
 				}
-				elseif ($v === "1" OR $v === "true")
+				elseif ($v === "1" or $v === "true")
 				{
-					$v = TRUE;
+					$v = true;
 				}
 			}
 			$params[$n] = $v;
@@ -271,7 +270,7 @@ class AdaptiveImage
 		
 		if ($params["voidRemoveWhiteSpace"])
 		{
-			$params["removeWhiteSpace"] = FALSE;
+			$params["removeWhiteSpace"] = false;
 		}
 		$this->params = $params;
 		
@@ -294,7 +293,7 @@ class AdaptiveImage
 			return $this->params[$name];
 		}
 		
-		return FALSE;
+		return false;
 	}
 	
 	public function getSrc()
@@ -309,7 +308,7 @@ class AdaptiveImage
 	{
 		if (!isset($_SERVER['HTTP_USER_AGENT']))
 		{
-			return FALSE;
+			return false;
 		}
 		$userAgent = strtolower($_SERVER['HTTP_USER_AGENT']);
 		
@@ -319,13 +318,13 @@ class AdaptiveImage
 	public function getBg()
 	{
 		$bg = $this->getParam("bg");
-		if ($bg == FALSE)
+		if ($bg == false)
 		{
 			$bg = "transparent";
 		}
 		else
 		{
-			if ($bg{0} != "#" AND $bg != "transparent")
+			if ($bg{0} != "#" and $bg != "transparent")
 			{
 				$bg = "#" . $bg;
 			}
@@ -340,7 +339,7 @@ class AdaptiveImage
 		ini_set('memory_limit', '1024M');
 		set_time_limit(999);
 		
-		if ($this->Image === FALSE)
+		if ($this->Image === false)
 		{
 			$this->Image = new \Imagick($this->srcFile);
 		}
@@ -359,7 +358,7 @@ class AdaptiveImage
 		{
 			if ($fit == "size")
 			{
-				if ($this->Size->fitWidth > $this->Size->width OR $this->Size->fitHeight > $this->Size->height) // does the actual image size is bigger then resized image
+				if ($this->Size->fitWidth > $this->Size->width or $this->Size->fitHeight > $this->Size->height) // does the actual image size is bigger then resized image
 				{
 					$this->Image->setImageBackgroundColor($bg);
 					if ($bg === "transparent")
@@ -367,11 +366,11 @@ class AdaptiveImage
 						$this->Image->setImageFormat("png");
 					}
 				}
-				$this->Image->scaleImage($this->Size->fitWidth, $this->Size->fitHeight, TRUE);
+				$this->Image->scaleImage($this->Size->fitWidth, $this->Size->fitHeight, true);
 			}
 			elseif ($fit == "fill")
 			{
-				$this->Image->scaleImage($this->Size->width, $this->Size->height, TRUE);
+				$this->Image->scaleImage($this->Size->width, $this->Size->height, true);
 			}
 			else
 			{
@@ -391,24 +390,24 @@ class AdaptiveImage
 				
 				$xs  = (string)$ex[0];
 				$ys  = (string)$ex[1];
-				$xsl = FALSE; //does cs contains any letter l,c,etc
-				$ysl = FALSE; //does cs contains any letter l,c,etc
+				$xsl = false; //does cs contains any letter l,c,etc
+				$ysl = false; //does cs contains any letter l,c,etc
 				if ($this->strContains($xs, "l"))
 				{
 					$x   = 0;
-					$xsl = TRUE;
+					$xsl = true;
 				}
 				elseif ($this->strContains($xs, "c"))
 				{
 					$x   = ($this->Size->width - $this->Size->fitWidth) / 2;
-					$xsl = TRUE;
+					$xsl = true;
 				}
 				else
 				{
 					$x = $xs;
 				}
 				$xs = preg_replace('/[a-z]/si', '', $xs);
-				if ($xs != "" AND $xsl)
+				if ($xs != "" and $xsl)
 				{
 					if ($xs{0} == "-")
 					{
@@ -439,19 +438,19 @@ class AdaptiveImage
 				if ($this->strContains($ys, "c") == "t")
 				{
 					$y   = 0;
-					$ysl = TRUE;
+					$ysl = true;
 				}
-				elseif ($this->strContains($ys, "c") OR $this->strContains($ys, "m")) //c = center, m = middle
+				elseif ($this->strContains($ys, "c") or $this->strContains($ys, "m")) //c = center, m = middle
 				{
 					$y   = ($this->Size->height - $this->Size->fitHeight) / 2;
-					$ysl = TRUE;
+					$ysl = true;
 				}
 				else
 				{
 					$y = intval($ys);
 				}
 				$ys = preg_replace('/[a-z]/si', '', $ys);
-				if ($ys != "" AND $ysl)
+				if ($ys != "" and $ysl)
 				{
 					if ($ys{0} == "-")
 					{
@@ -486,7 +485,7 @@ class AdaptiveImage
 		}
 		else
 		{
-			$this->Image->scaleImage($this->Size->width, $this->Size->height, TRUE);
+			$this->Image->scaleImage($this->Size->width, $this->Size->height, true);
 		}
 		
 		if ($this->getParam("cropas"))
@@ -531,7 +530,7 @@ class AdaptiveImage
 		}
 		$this->Image->stripImage();
 		
-		return TRUE;
+		return true;
 	}
 	
 	private function calcSizes()
@@ -539,7 +538,7 @@ class AdaptiveImage
 		$Output         = new \stdClass();
 		$Output->width  = "auto";
 		$Output->height = "auto";
-		if ($this->Image === FALSE) //much faster way to calculate image size
+		if ($this->Image === false) //much faster way to calculate image size
 		{
 			$size              = getimagesize($this->srcFile);
 			$Output->srcWidth  = $size[0];
@@ -669,8 +668,8 @@ class AdaptiveImage
 		$draw->setFont(__DIR__ . "/fonts/Nobile-Regular.ttf");
 		$draw->setFontSize(14);
 		$draw->setFillColor($color);
-		$draw->setStrokeAntialias(TRUE);
-		$draw->setTextAntialias(TRUE);
+		$draw->setStrokeAntialias(true);
+		$draw->setTextAntialias(true);
 		
 		/* Get font metrics */
 		$metrics = $this->Image->queryFontMetrics($draw, $message);
@@ -683,7 +682,7 @@ class AdaptiveImage
 		$this->Image->drawImage($draw);
 		
 		
-		return $this->send(TRUE);
+		return $this->send(true);
 	}
 	
 	private function setFinalPath()
@@ -714,7 +713,7 @@ class AdaptiveImage
 					}
 					$a = $width;
 				}
-				if ($this->strContains($usd, "w") AND $this->strContains($usd, "h"))
+				if ($this->strContains($usd, "w") and $this->strContains($usd, "h"))
 				{
 					$a .= "x";
 				}
@@ -756,9 +755,9 @@ class AdaptiveImage
 		return $this->assignStrVars(["extension" => $extension], $this->finalPath);
 	}
 	
-	private function send($sendError = FALSE)
+	private function send($sendError = false)
 	{
-		if ($this->getParam("writeFile") && !file_exists($this->getFinalPath()) AND $sendError == FALSE)
+		if ($this->getParam("writeFile") && !file_exists($this->getFinalPath()) and $sendError == false)
 		{
 			$destPath = dirname($this->getFinalPath());
 			
@@ -770,7 +769,7 @@ class AdaptiveImage
 			// Make the dir if missing.
 			if (!is_dir($destPath))
 			{
-				mkdir($destPath, 0755, TRUE);
+				mkdir($destPath, 0755, true);
 			}
 			
 			// Check if we can write to this dir.
@@ -781,11 +780,11 @@ class AdaptiveImage
 			$this->Image->writeImage($this->getFinalPath());
 		}
 		
-		if ($this->getParam("sendToBrowser") OR $sendError)
+		if ($this->getParam("sendToBrowser") or $sendError)
 		{
 			if (!$this->getParam("debug"))
 			{
-				$this->cleanOutput(TRUE);
+				$this->cleanOutput(true);
 				header("Content-Type: image/" . $this->Image->getImageFormat());
 				header("Cache-Control: private, max-age=" . $this->browserCache);
 				header('Expires: ' . gmdate('D, d M Y H:i:s', time() + $this->browserCache) . ' GMT');
@@ -841,15 +840,15 @@ class AdaptiveImage
 	{
 		if (!is_object($img))
 		{
-			return FALSE;
+			return false;
 		}
 		if ($alpha > 1 || $alpha < 0)
 		{
-			return FALSE;
+			return false;
 		}
 		$img->evaluateImage(\Imagick::EVALUATE_MULTIPLY, $alpha, \Imagick::CHANNEL_ALPHA);
 		
-		return TRUE;
+		return true;
 	}
 	
 	protected function setCenterWaterMark()
@@ -959,7 +958,7 @@ class AdaptiveImage
 		return $data;
 	}
 	
-	private function cleanOutput($isRecursive = FALSE)
+	private function cleanOutput($isRecursive = false)
 	{
 		if (ob_get_contents())
 		{
@@ -967,27 +966,27 @@ class AdaptiveImage
 			ob_end_clean();
 			if ($isRecursive)
 			{
-				cleanOutput(TRUE);
+				cleanOutput(true);
 			}
 		}
 	}
 	
-	private function assignStrVars($vars, $string, $defaultVars = FALSE)
+	private function assignStrVars($vars, $string, $defaultVars = false)
 	{
 		if (is_string($vars))
 		{
 			$vars = parseStr($vars);
 		}
-		if (is_array($vars) AND count($vars) > 0)
+		if (is_array($vars) and count($vars) > 0)
 		{
 			foreach ($vars as $name => $value)
 			{
 				$string = str_replace(['%' . $name . '%', '[' . $name . ']'], $value, $string);
 			}
 		}
-		if ($defaultVars !== FALSE)
+		if ($defaultVars !== false)
 		{
-			$string = $this->assignStrVars($defaultVars, $string, FALSE);
+			$string = $this->assignStrVars($defaultVars, $string, false);
 		}
 		
 		return $string;
@@ -996,16 +995,16 @@ class AdaptiveImage
 	private function strContains($from, $str)
 	{
 		$post = strpos($from, $str);
-		if ($post === FALSE)
+		if ($post === false)
 		{
-			return FALSE;
+			return false;
 		}
 		if ($post >= 0)
 		{
-			return TRUE;
+			return true;
 		}
 		
-		return FALSE;
+		return false;
 	}
 }
 
