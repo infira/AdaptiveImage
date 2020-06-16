@@ -109,6 +109,10 @@ class AdaptiveImage
 			{
 				$path = $this->parseCachePath($path);
 			}
+			if (!is_dir($path))
+			{
+				$this->sendError("Cache path must be valid path");
+			}
 			$this->cachePath = $path;
 		}
 	}
@@ -199,10 +203,6 @@ class AdaptiveImage
 		if (array_key_exists("size", $params))
 		{
 			$s = explode("x", strtolower($params["size"]));
-			if (count($s) > 2)
-			{
-				$this->sendError('size paramater must be $numberx$number');
-			}
 			if (!isset($s[1]))
 			{
 				$s[1] = 0;
