@@ -6,6 +6,7 @@
 	  "email": "gen@infira.ee"
 	}
   ],
+  "minimum-stability": "dev",
   "autoload": {
 	"psr-4": {
 	  "Infira\\AdaptiveImage\\": "src/"
