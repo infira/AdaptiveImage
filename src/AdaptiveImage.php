@@ -57,6 +57,10 @@ class AdaptiveImage
 		}
 		
 		$this->finalExtension = pathinfo($src)["extension"];
+ 		if (strtolower($this->finalExtension) == 'svg')
+		{
+			return $this->sendError("SVG image is not supported.");
+		}
 		
 		
 		/* whew might the cache file be? */
