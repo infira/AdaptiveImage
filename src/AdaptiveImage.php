@@ -57,7 +57,7 @@ class AdaptiveImage
 		}
 		
 		$this->finalExtension = pathinfo($src)["extension"];
- 		if (strtolower($this->finalExtension) == 'svg')
+		if (strtolower($this->finalExtension) == 'svg')
 		{
 			return $this->sendError("SVG image is not supported.");
 		}
@@ -204,8 +204,11 @@ class AdaptiveImage
 		{
 			if (substr($key, 0, 4) == "amp;")
 			{
-				$this->set(substr($key, 4), $val);
-				$this->delete($key);
+				if (substr($key, 0, 4) == "amp;")
+				{
+					unset($configArr[$key]);
+					$configArr[substr($key, 4)] = $val;
+				}
 			}
 		}
 		
