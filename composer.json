@@ -6,6 +6,7 @@
 	  "email": "gen@infira.ee"
 	}
   ],
+  "prefer-stable"    : true,
   "minimum-stability": "dev",
   "autoload": {
 	"psr-4": {
