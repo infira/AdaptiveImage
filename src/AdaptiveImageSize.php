@@ -13,22 +13,13 @@ class AdaptiveImageSize
 	public $fitWidth;
 	public $fitHeight;
 	
-	public function calculate($file, $desiredWidth, $desiredHeight,$fit)
+	public function calculate(\Imagick $file, $desiredWidth, $desiredHeight, $fit)
 	{
-		$this->width  = "auto";
-		$this->height = "auto";
-		if (is_object($file))
-		{
-			$size            = $file->getImageGeometry();
-			$this->srcWidth  = $size["width"];
-			$this->srcHeight = $size["height"];
-		}
-		else
-		{
-			$size            = getimagesize($file);
-			$this->srcWidth  = $size[0];
-			$this->srcHeight = $size[1];
-		}
+		$this->width     = "auto";
+		$this->height    = "auto";
+		$size            = $file->getImageGeometry();
+		$this->srcWidth  = $size["width"];
+		$this->srcHeight = $size["height"];
 		
 		if ($desiredWidth != "auto" && $desiredHeight == "auto")
 		{
