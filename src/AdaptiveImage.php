@@ -66,6 +66,7 @@ class AdaptiveImage
 		
 		
 		/* whew might the cache file be? */
+		$this->parseConfig();
 		$this->Size  = new AdaptiveImageSize();
 		$this->Image = new AdaptiveImageImagick($this->srcFile);
 		$this->Size->calculate($this->Image, $this->getConf('width'), $this->getConf('height'), $this->getConf('fit'));
@@ -247,26 +248,43 @@ class AdaptiveImage
 		$default['anlc']                   = true; //anlc = allow non letter character on cache folder
 		$default['fn']                     = '';   //use this as file name
 		
-		$config = array_merge($default, $this->config, $configArr);
-		
-		if (array_key_exists('size', $config))
+		$this->config = array_merge($default, $this->config, $configArr);
+	}
+	
+	private function parseConfig()
+	{
+		debugFlag("aa",$this->config);
+		if (array_key_exists('size', $this->config))
 		{
-			$s = explode('x', strtolower($config['size']));
+			$s = explode('x', strtolower($this->config['size']));
 			if (!isset($s[1]))
 			{
 				$s[1] = 0;
 			}
-			$config['width']  = trim($s[0]);
-			$config['height'] = trim($s[1]);
-			if ((!is_numeric($config['width']) and $config['width'] != 'auto') or (!is_numeric($config['height']) and $config['height'] != 'auto'))
+			$this->config['width']  = trim($s[0]);
+			$this->config['height'] = trim($s[1]);
+			if ((!is_numeric($this->config['width']) and $this->config['width'] != 'auto') or (!is_numeric($this->config['height']) and $this->config['height'] != 'auto'))
 			{
 				$this->sendError('size paramater must be $numberx$number');
 			}
 		}
-		$config['quality'] = preg_replace('/[^0-9]/', "", $config['quality']);
+		elseif (array_key_exists('width',$this->config))
+        {
+	        if ((!is_numeric($this->config['width']) and $this->config['width'] != 'auto'))
+	        {
+		        $this->sendError('width paramater must be $numberx or auto');
+	        }
+		}
+		elseif (array_key_exists('height',$this->config))
+		{
+			if ((!is_numeric($this->config['height']) and $this->config['height'] != 'auto'))
+			{
+				$this->sendError('height paramater must be $numberx or auto');
+			}
+		}
 		foreach (['width', 'height', 'quality'] as $cf)
 		{
-			$v = $config[$cf];
+			$v = $this->config[$cf];
 			if (is_numeric($v))
 			{
 				if ($v <= 0)
@@ -289,9 +307,9 @@ class AdaptiveImage
 				}
 			}
 		}
-		if ($config['width'] == 'auto' and $config['height'] == 'auto')
+		if ($this->config['width'] == 'auto' and $this->config['height'] == 'auto')
 		{
-			if (!isset($config['size']))
+			if (!isset($this->config['size']))
 			{
 				$this->sendError('size parameter is not defined, or width,heigh');
 			}
@@ -300,8 +318,7 @@ class AdaptiveImage
 				$this->sendError('width and height cannot be auto at the same time');
 			}
 		}
-		$config['quality'] = preg_replace('/[^0-9]/', "", $config['quality']);
-		foreach ($config as $n => $v)
+		foreach ($this->config as $n => $v)
 		{
 			if (in_array($n, ['forceCache', 'fit', 'debug', 'generate', 'removeWhiteSpace', 'writeFile', 'sendToBrowser', 'voidRemoveWhiteSpace', 'blur', 'hdir', 'webp', 'useOnlyBds', 'owerwrite']))
 			{
@@ -314,15 +331,14 @@ class AdaptiveImage
 					$v = true;
 				}
 			}
-			$config[$n] = $v;
+			$this->config[$n] = $v;
 		}
 		
-		if ($config['voidRemoveWhiteSpace'])
+		$this->config['quality'] = preg_replace('/[^0-9]/', "", $this->config['quality']);
+		if ($this->config['voidRemoveWhiteSpace'])
 		{
-			$config['removeWhiteSpace'] = false;
+			$this->config['removeWhiteSpace'] = false;
 		}
-		
-		$this->config = $config;
 		
 		if ($this->getConf('cropas'))
 		{
