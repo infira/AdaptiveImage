@@ -71,7 +71,6 @@ class AdaptiveImage
 		$this->Image = new AdaptiveImageImagick($this->srcFile);
 		$this->Size->calculate($this->Image, $this->getConf('width'), $this->getConf('height'), $this->getConf('fit'));
 		$this->setFinalPath();
-		//debug($this->params);
 		
 		if (!$this->getConf('generate'))
 		{
@@ -321,10 +320,13 @@ class AdaptiveImage
 		{
 			if (in_array($n, ['forceCache', 'fit', 'debug', 'generate', 'removeWhiteSpace', 'writeFile', 'sendToBrowser', 'voidRemoveWhiteSpace', 'blur', 'hdir', 'webp', 'useOnlyBds', 'owerwrite']))
 			{
-				$v = false;
-				if ($v === '1' or $v === 'true')
+				if ($v === '1' or $v === 'true' or $v === 1 or $v === true)
 				{
 					$v = true;
+				}
+				else
+				{
+					$v = false;
 				}
 			}
 			$this->config[$n] = $v;
