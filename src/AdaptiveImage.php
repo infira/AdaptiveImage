@@ -253,7 +253,6 @@ class AdaptiveImage
 	
 	private function parseConfig()
 	{
-		debugFlag("aa",$this->config);
 		if (array_key_exists('size', $this->config))
 		{
 			$s = explode('x', strtolower($this->config['size']));
@@ -268,14 +267,14 @@ class AdaptiveImage
 				$this->sendError('size paramater must be $numberx$number');
 			}
 		}
-		elseif (array_key_exists('width',$this->config))
-        {
-	        if ((!is_numeric($this->config['width']) and $this->config['width'] != 'auto'))
-	        {
-		        $this->sendError('width paramater must be $numberx or auto');
-	        }
+		elseif (array_key_exists('width', $this->config))
+		{
+			if ((!is_numeric($this->config['width']) and $this->config['width'] != 'auto'))
+			{
+				$this->sendError('width paramater must be $numberx or auto');
+			}
 		}
-		elseif (array_key_exists('height',$this->config))
+		elseif (array_key_exists('height', $this->config))
 		{
 			if ((!is_numeric($this->config['height']) and $this->config['height'] != 'auto'))
 			{
@@ -322,11 +321,8 @@ class AdaptiveImage
 		{
 			if (in_array($n, ['forceCache', 'fit', 'debug', 'generate', 'removeWhiteSpace', 'writeFile', 'sendToBrowser', 'voidRemoveWhiteSpace', 'blur', 'hdir', 'webp', 'useOnlyBds', 'owerwrite']))
 			{
-				if ($v === '0' or $v === 'false')
-				{
-					$v = false;
-				}
-				elseif ($v === '1' or $v === 'true')
+				$v = false;
+				if ($v === '1' or $v === 'true')
 				{
 					$v = true;
 				}
