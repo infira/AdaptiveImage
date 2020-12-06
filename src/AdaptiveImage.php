@@ -318,7 +318,7 @@ class AdaptiveImage
 		}
 		foreach ($this->config as $n => $v)
 		{
-			if (in_array($n, ['forceCache', 'fit', 'debug', 'generate', 'removeWhiteSpace', 'writeFile', 'sendToBrowser', 'voidRemoveWhiteSpace', 'blur', 'hdir', 'webp', 'useOnlyBds', 'owerwrite']))
+			if (in_array($n, ['forceCache', 'debug', 'generate', 'removeWhiteSpace', 'writeFile', 'sendToBrowser', 'voidRemoveWhiteSpace', 'blur', 'hdir', 'webp', 'useOnlyBds', 'owerwrite']))
 			{
 				if ($v === '1' or $v === 'true' or $v === 1 or $v === true)
 				{
