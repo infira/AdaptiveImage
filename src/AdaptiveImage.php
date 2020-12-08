@@ -38,23 +38,23 @@ class AdaptiveImage
 		}
 		if (!$src)
 		{
-			return $this->error('Source file is not defined');
+			$this->error('Source file is not defined');
 		}
 		$this->srcFile = $this->srcPath . $src;
 		
 		// check if the file exists at all
 		if (!file_exists($this->srcFile))
 		{
-			return $this->error('Source file not found : ' . $this->srcFile);
+			$this->error('Source file not found : ' . $this->srcFile);
 		}
 		if (!is_readable($this->srcFile) or !is_file($this->srcFile))
 		{
-			return $this->error('File is not readable or is not and file : ' . $this->srcFile);
+			$this->error('File is not readable or is not and file : ' . $this->srcFile);
 		}
 		
 		if (strpos(mime_content_type($this->srcFile), 'image') === false)
 		{
-			return $this->error('File is not image : ' . $this->srcFile);
+			$this->error('File is not image : ' . $this->srcFile);
 		}
 		
 		$pi                   = pathinfo($src);
@@ -62,7 +62,7 @@ class AdaptiveImage
 		$this->finalFileName  = $pi['filename'];
 		if (strtolower($this->finalExtension) == 'svg')
 		{
-			return $this->error('SVG image is not supported.');
+			$this->error('SVG image is not supported.');
 		}
 		
 		
@@ -104,7 +104,42 @@ class AdaptiveImage
 			}
 		}
 		
-		return $this->send();
+		$fp       = $this->getFinalPath();
+		$destPath = dirname($fp);
+		if (empty($destPath))
+		{
+			$this->error('Destionation path not seted');
+		}
+		
+		// Make the dir if missing.
+		if (!is_dir($destPath))
+		{
+			mkdir($destPath, 0755, true);
+		}
+		if (!is_dir($destPath) || !is_writable($destPath))
+		{
+			$this->error('Failed to create destination path at: ' . $destPath);
+		}
+		$writeRes = $this->Image->writeImage($fp);
+		if (file_exists($this->getFinalPath()))
+		{
+			if ($this->getConf('sendToBrowser'))
+			{
+				$Img = new Imagick($fp);
+				header('Content-Type: image/' . $this->Image->getImageFormat());
+				header('Cache-Control: private, max-age=' . $this->browserCache);
+				header('Expires: ' . gmdate('D, d M Y H:i:s', time() + $this->browserCache) . ' GMT');
+				echo $this->Image->getImageBlob();
+			}
+			else
+			{
+				return true;
+			}
+		}
+		else
+		{
+			$this->error('Image was not created');
+		}
 	}
 	
 	/**
@@ -233,7 +268,6 @@ class AdaptiveImage
 		$default['fitc'] = 'cm';
 		
 		$default['bg']                     = false; //Used only in fit
-		$default['debug']                  = false; //Image will not send to browser
 		$default['writeFile']              = true;
 		$default['owerwrite']              = true; //overwrite file if exists
 		$default['sendToBrowser']          = true;
@@ -319,7 +353,7 @@ class AdaptiveImage
 		}
 		foreach ($this->config as $n => $v)
 		{
-			if (in_array($n, ['forceCache', 'debug', 'generate', 'removeWhiteSpace', 'writeFile', 'sendToBrowser', 'voidRemoveWhiteSpace', 'blur', 'hdir', 'webp', 'useOnlyBds', 'owerwrite']))
+			if (in_array($n, ['forceCache', 'generate', 'removeWhiteSpace', 'writeFile', 'sendToBrowser', 'voidRemoveWhiteSpace', 'blur', 'hdir', 'webp', 'useOnlyBds', 'owerwrite']))
 			{
 				if ($v === '1' or $v === 'true' or $v === 1 or $v === true)
 				{
@@ -593,45 +627,6 @@ class AdaptiveImage
 		return true;
 	}
 	
-	/**
-	 * Send image error written on it to browser
-	 *
-	 * @param string $message
-	 * @return mixed
-	 */
-	private function error(string $message)
-	{
-		if (!$this->getConf('sendToBrowser'))
-		{
-			throw new \Exception($message);
-		}
-		/* Create Imagick objects */
-		$this->Image = new Imagick();
-		$draw        = new \ImagickDraw();
-		$color       = new \ImagickPixel('#000000');
-		$background  = new \ImagickPixel('#FFFFFF'); // Transparent
-		
-		/* Font properties */
-		$draw->setFont(__DIR__ . '/fonts/Nobile-Regular.ttf');
-		$draw->setFontSize(14);
-		$draw->setFillColor($color);
-		$draw->setStrokeAntialias(true);
-		$draw->setTextAntialias(true);
-		
-		/* Get font metrics */
-		$metrics = $this->Image->queryFontMetrics($draw, $message);
-		/* Create text */
-		$draw->annotation(0, $metrics['ascender'], $message);
-		
-		/* Create image */
-		$this->Image->newImage($metrics['textWidth'], $metrics['textHeight'], $background);
-		$this->Image->setImageFormat('png');
-		$this->Image->drawImage($draw);
-		
-		
-		return $this->send(true);
-	}
-	
 	private function setFinalPath()
 	{
 		$bg  = $this->getBgConf();
@@ -732,58 +727,51 @@ class AdaptiveImage
 		return $this->finalExtension;
 	}
 	
-	private function send($sendError = false)
+	/**
+	 * Send image error written on it to browser
+	 *
+	 * @param string $message
+	 * @return mixed
+	 */
+	private function error(string $message)
 	{
-		if ($this->getConf('writeFile') && !file_exists($this->getFinalPath()) and $sendError == false)
+		if (!$this->getConf('sendToBrowser'))
 		{
-			$destPath = dirname($this->getFinalPath());
-			
-			if (empty($destPath))
-			{
-				$this->error('Destionation path not seted');
-			}
-			
-			// Make the dir if missing.
-			if (!is_dir($destPath))
-			{
-				mkdir($destPath, 0755, true);
-			}
-			
-			// Check if we can write to this dir.
-			if (!is_dir($destPath) || !is_writable($destPath))
-			{
-				return $this->error('Failed to create destination directory at: ' . $destPath);
-			}
-			$this->Image->writeImage($this->getFinalPath());
+			throw new \Exception($message);
 		}
-		if ($this->getConf('sendToBrowser') or $sendError)
+		/* Create Imagick objects */
+		$this->Image = new Imagick();
+		$draw        = new \ImagickDraw();
+		$color       = new \ImagickPixel('#000000');
+		$background  = new \ImagickPixel('#FFFFFF'); // Transparent
+		
+		/* Font properties */
+		$draw->setFont(__DIR__ . '/fonts/Nobile-Regular.ttf');
+		$draw->setFontSize(14);
+		$draw->setFillColor($color);
+		$draw->setStrokeAntialias(true);
+		$draw->setTextAntialias(true);
+		
+		/* Get font metrics */
+		$metrics = $this->Image->queryFontMetrics($draw, $message);
+		/* Create text */
+		$draw->annotation(0, $metrics['ascender'], $message);
+		
+		/* Create image */
+		$this->Image->newImage($metrics['textWidth'], $metrics['textHeight'], $background);
+		$this->Image->setImageFormat('png');
+		$this->Image->drawImage($draw);
+		
+		if (ob_get_contents())
 		{
-			if (!$this->getConf('debug'))
-			{
-				if (ob_get_contents())
-				{
-					ob_clean();
-					ob_end_clean();
-				}
-				header('Content-Type: image/' . $this->Image->getImageFormat());
-				header('Cache-Control: private, max-age=' . $this->browserCache);
-				header('Expires: ' . gmdate('D, d M Y H:i:s', time() + $this->browserCache) . ' GMT');
-				if (file_exists($this->getFinalPath()))
-				{
-					echo file_get_contents($this->getFinalPath());
-				}
-				else
-				{
-					//$this->Image = new Imagick();
-					echo $this->Image->getImageBlob();
-				}
-				exit();
-			}
+			ob_clean();
+			ob_end_clean();
 		}
-		if ($this->getConf('debug'))
-		{
-			exit('ok');
-		}
+		header('Content-Type: image/' . $this->Image->getImageFormat());
+		header('Cache-Control: private, max-age=' . $this->browserCache);
+		header('Expires: ' . gmdate('D, d M Y H:i:s', time() + $this->browserCache) . ' GMT');
+		echo $this->Image->getImageBlob();
+		exit;
 	}
 	
 	//###########Helpers
