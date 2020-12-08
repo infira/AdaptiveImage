@@ -4,6 +4,7 @@ namespace Infira\AdaptiveImage;
 
 use Imagick;
 use ImagickPixel;
+use MongoDB\Driver\Exception\EncryptionException;
 
 class AdaptiveImage
 {
@@ -33,27 +34,27 @@ class AdaptiveImage
 		$this->setConfig($config);
 		if (!is_dir($this->cachePath))
 		{
-			$this->sendError("Cache '" . $this->cachePath . "' path does not exists");
+			$this->error("Cache '" . $this->cachePath . "' path does not exists");
 		}
 		if (!$src)
 		{
-			return $this->sendError('Source file is not defined');
+			return $this->error('Source file is not defined');
 		}
 		$this->srcFile = $this->srcPath . $src;
 		
 		// check if the file exists at all
 		if (!file_exists($this->srcFile))
 		{
-			return $this->sendError('Source file not found : ' . $this->srcFile);
+			return $this->error('Source file not found : ' . $this->srcFile);
 		}
 		if (!is_readable($this->srcFile) or !is_file($this->srcFile))
 		{
-			return $this->sendError('File is not readable or is not and file : ' . $this->srcFile);
+			return $this->error('File is not readable or is not and file : ' . $this->srcFile);
 		}
 		
 		if (strpos(mime_content_type($this->srcFile), 'image') === false)
 		{
-			return $this->sendError('File is not image : ' . $this->srcFile);
+			return $this->error('File is not image : ' . $this->srcFile);
 		}
 		
 		$pi                   = pathinfo($src);
@@ -61,7 +62,7 @@ class AdaptiveImage
 		$this->finalFileName  = $pi['filename'];
 		if (strtolower($this->finalExtension) == 'svg')
 		{
-			return $this->sendError('SVG image is not supported.');
+			return $this->error('SVG image is not supported.');
 		}
 		
 		
@@ -121,7 +122,7 @@ class AdaptiveImage
 			}
 			if (!is_dir($path))
 			{
-				$this->sendError("Cache path($path) must be valid path");
+				$this->error("Cache path($path) must be valid path");
 			}
 			$this->cachePath = $path;
 		}
@@ -148,7 +149,7 @@ class AdaptiveImage
 		{
 			if (!is_dir($path))
 			{
-				$this->sendError('source path must be valid path');
+				$this->error('source path must be valid path');
 			}
 			$this->srcPath = str_replace(DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR, $path . DIRECTORY_SEPARATOR);
 		}
@@ -263,21 +264,21 @@ class AdaptiveImage
 			$this->config['height'] = trim($s[1]);
 			if ((!is_numeric($this->config['width']) and $this->config['width'] != 'auto') or (!is_numeric($this->config['height']) and $this->config['height'] != 'auto'))
 			{
-				$this->sendError('size paramater must be $numberx$number');
+				$this->error('size paramater must be $numberx$number');
 			}
 		}
 		elseif (array_key_exists('width', $this->config))
 		{
 			if ((!is_numeric($this->config['width']) and $this->config['width'] != 'auto'))
 			{
-				$this->sendError('width paramater must be $numberx or auto');
+				$this->error('width paramater must be $numberx or auto');
 			}
 		}
 		elseif (array_key_exists('height', $this->config))
 		{
 			if ((!is_numeric($this->config['height']) and $this->config['height'] != 'auto'))
 			{
-				$this->sendError('height paramater must be $numberx or auto');
+				$this->error('height paramater must be $numberx or auto');
 			}
 		}
 		foreach (['width', 'height', 'quality'] as $cf)
@@ -287,7 +288,7 @@ class AdaptiveImage
 			{
 				if ($v <= 0)
 				{
-					$this->sendError("$cf($v) should be bigger than 0");
+					$this->error("$cf($v) should be bigger than 0");
 				}
 			}
 			else
@@ -296,12 +297,12 @@ class AdaptiveImage
 				{
 					if ($v !== 'auto')
 					{
-						$this->sendError("$cf($v) should be number");
+						$this->error("$cf($v) should be number");
 					}
 				}
 				else
 				{
-					$this->sendError("$cf($v) should be number");
+					$this->error("$cf($v) should be number");
 				}
 			}
 		}
@@ -309,11 +310,11 @@ class AdaptiveImage
 		{
 			if (!isset($this->config['size']))
 			{
-				$this->sendError('size parameter is not defined, or width,heigh');
+				$this->error('size parameter is not defined, or width,heigh');
 			}
 			else
 			{
-				$this->sendError('width and height cannot be auto at the same time');
+				$this->error('width and height cannot be auto at the same time');
 			}
 		}
 		foreach ($this->config as $n => $v)
@@ -434,7 +435,7 @@ class AdaptiveImage
 			}
 			else
 			{
-				$this->sendError("fit '$fit' is not implemented");
+				$this->error("fit '$fit' is not implemented");
 			}
 			if ($this->getConf('fitc'))
 			{
@@ -598,8 +599,12 @@ class AdaptiveImage
 	 * @param string $message
 	 * @return mixed
 	 */
-	private function sendError(string $message)
+	private function error(string $message)
 	{
+		if (!$this->getConf('sendToBrowser'))
+		{
+			throw new \Exception($message);
+		}
 		/* Create Imagick objects */
 		$this->Image = new Imagick();
 		$draw        = new \ImagickDraw();
@@ -735,7 +740,7 @@ class AdaptiveImage
 			
 			if (empty($destPath))
 			{
-				$this->sendError('Destionation path not seted');
+				$this->error('Destionation path not seted');
 			}
 			
 			// Make the dir if missing.
@@ -747,7 +752,7 @@ class AdaptiveImage
 			// Check if we can write to this dir.
 			if (!is_dir($destPath) || !is_writable($destPath))
 			{
-				return $this->sendError('Failed to create destination directory at: ' . $destPath);
+				return $this->error('Failed to create destination directory at: ' . $destPath);
 			}
 			$this->Image->writeImage($this->getFinalPath());
 		}
