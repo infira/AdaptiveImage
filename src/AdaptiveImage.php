@@ -120,25 +120,32 @@ class AdaptiveImage
 			$this->Image->writeImage($fp);
 			if (file_exists($fp))
 			{
-				$this->Image = new Imagick($fp);
+				if ($this->getConf('sendToBrowser'))
+				{
+					header('Content-type: image/' . $this->Image->getImageFormat());
+					header('Cache-Control: private, max-age=' . $this->browserCache);
+					header('Expires: ' . gmdate('D, d M Y H:i:s', time() + $this->browserCache) . ' GMT');
+					echo file_get_contents($fp);
+					$this->Image->clear();
+					$this->Image->destroy();
+				}
 			}
 			else
 			{
 				$this->error('Image was not created');
 			}
 		}
-		if ($this->getConf('sendToBrowser'))
-		{
-			header('Content-type: image/' . $this->Image->getImageFormat());
-			header('Cache-Control: private, max-age=' . $this->browserCache);
-			header('Expires: ' . gmdate('D, d M Y H:i:s', time() + $this->browserCache) . ' GMT');
-			echo file_get_contents($fp);
-			$this->Image->clear();
-			$this->Image->destroy();
-		}
 		else
 		{
-			return true;
+			if ($this->getConf('sendToBrowser'))
+			{
+				header('Content-type: image/' . $this->Image->getImageFormat());
+				header('Cache-Control: private, max-age=' . $this->browserCache);
+				header('Expires: ' . gmdate('D, d M Y H:i:s', time() + $this->browserCache) . ' GMT');
+				echo $this->Image->getImageBlob();
+				$this->Image->clear();
+				$this->Image->destroy();
+			}
 		}
 		
 		return true;
