@@ -68,19 +68,14 @@ class AdaptiveImage
 		
 		/* whew might the cache file be? */
 		$this->parseConfig();
-		$this->Size  = new AdaptiveImageSize();
+		$this->Size  = new AdaptiveImageSize($this);
 		$this->Image = new AdaptiveImageImagick($this->srcFile);
-		$this->Size->calculate($this->Image, $this->getConf('width'), $this->getConf('height'), $this->getConf('fit'));
+		$this->Size->calculate($this->Image);
 		$this->setFinalPath();
 		
 		if (!$this->getConf('generate'))
 		{
 			return false;
-		}
-		
-		if ($this->getConf('forceCache') == true && file_exists($this->getFinalPath()))
-		{
-			unlink($this->getFinalPath());
 		}
 		
 		if (!$this->getConf('writeFile'))
@@ -95,7 +90,7 @@ class AdaptiveImage
 			}
 			else
 			{
-				if ($this->getConf('owerwrite'))
+				if ($this->getConf('forceCache'))
 				{
 					// modified, clear it
 					unlink($this->getFinalPath());
@@ -120,26 +115,33 @@ class AdaptiveImage
 		{
 			$this->error('Failed to create destination path at: ' . $destPath);
 		}
-		$writeRes = $this->Image->writeImage($fp);
-		if (file_exists($this->getFinalPath()))
+		if ($this->getConf('writeFile'))
 		{
-			if ($this->getConf('sendToBrowser'))
+			$this->Image->writeImage($fp);
+			if (file_exists($fp))
 			{
-				$Img = new Imagick($fp);
-				header('Content-Type: image/' . $this->Image->getImageFormat());
-				header('Cache-Control: private, max-age=' . $this->browserCache);
-				header('Expires: ' . gmdate('D, d M Y H:i:s', time() + $this->browserCache) . ' GMT');
-				echo $this->Image->getImageBlob();
+				$this->Image = new Imagick($fp);
 			}
 			else
 			{
-				return true;
+				$this->error('Image was not created');
 			}
+		}
+		if ($this->getConf('sendToBrowser'))
+		{
+			header('Content-type: image/' . $this->Image->getImageFormat());
+			header('Cache-Control: private, max-age=' . $this->browserCache);
+			header('Expires: ' . gmdate('D, d M Y H:i:s', time() + $this->browserCache) . ' GMT');
+			echo file_get_contents($fp);
+			$this->Image->clear();
+			$this->Image->destroy();
 		}
 		else
 		{
-			$this->error('Image was not created');
+			return true;
 		}
+		
+		return true;
 	}
 	
 	/**
@@ -246,14 +248,16 @@ class AdaptiveImage
 			}
 		}
 		
-		$default                     = [];
-		$default['width']            = 'auto';
-		$default['height']           = 'auto';
-		$default['quality']          = 80;
-		$default['forceCache']       = false;
-		$default['removeWhiteSpace'] = false;
-		$default['generate']         = true;
-		$default['fit']              = false; //Final image must be exacty the $width and height width backgrounds
+		$default                         = [];
+		$default['width']                = 'auto';
+		$default['height']               = 'auto';
+		$default['quality']              = 80;
+		$default['forceCache']           = false;//overwrite file if exists
+		$default['removeWhiteSpace']     = false;
+		$default['generate']             = true;
+		$default['fit']                  = false; //Final image must be exacty the $width and height width backgrounds
+		$default['maintainTransparency'] = true;  //In case of source png maintain transparency
+		$default['upScale']              = true;  //If desired image size is smaller than actual image, then upscale it
 		
 		/*
 		 * fitc = fit coordinates xy
@@ -267,9 +271,8 @@ class AdaptiveImage
 		 */
 		$default['fitc'] = 'cm';
 		
-		$default['bg']                     = false; //Used only in fit
+		$default['bg']                     = null; //Used only in fit
 		$default['writeFile']              = true;
-		$default['owerwrite']              = true; //overwrite file if exists
 		$default['sendToBrowser']          = true;
 		$default['voidRemoveWhiteSpace']   = false;
 		$default['blur']                   = false;
@@ -278,9 +281,10 @@ class AdaptiveImage
 		$default['usd']                    = 'w';      //Use picture size in dir, w = width, h = height, both together can be used as well
 		$default['cropas']                 = false;    //crop image after scaling
 		$default['transparentImageFormat'] = 'png';
-		$default['webp']                   = false;//use webp
-		$default['anlc']                   = true; //anlc = allow non letter character on cache folder
-		$default['fn']                     = '';   //use this as file name
+		$default['webp']                   = false; //use webp
+		$default['anlc']                   = true;  //anlc = allow non letter character on cache folder
+		$default['fn']                     = '';    //use this as file name
+		$default['webp:method']            = '6';   //use this as file name
 		
 		$this->config = array_merge($default, $this->config, $configArr);
 	}
@@ -353,7 +357,7 @@ class AdaptiveImage
 		}
 		foreach ($this->config as $n => $v)
 		{
-			if (in_array($n, ['forceCache', 'generate', 'removeWhiteSpace', 'writeFile', 'sendToBrowser', 'voidRemoveWhiteSpace', 'blur', 'hdir', 'webp', 'useOnlyBds', 'owerwrite']))
+			if (in_array($n, ['forceCache', 'generate', 'removeWhiteSpace', 'writeFile', 'sendToBrowser', 'voidRemoveWhiteSpace', 'blur', 'hdir', 'webp', 'useOnlyBds', 'upScale']))
 			{
 				if ($v === '1' or $v === 'true' or $v === 1 or $v === true)
 				{
@@ -385,19 +389,26 @@ class AdaptiveImage
 		}
 	}
 	
-	private function getBgConf()
+	private function getBg()
 	{
 		$bg = $this->getConf('bg');
-		if ($bg == false)
+		if ($this->getConf('maintainTransparency')) //colorize transparent background
 		{
-			$bg = 'transparent';
+			if (!$bg)
+			{
+				return 'transparent';
+			}
 		}
 		else
 		{
-			if ($bg{0} != '#' and $bg != 'transparent')
+			if (!$bg)
 			{
-				$bg = '#' . $bg;
+				return 'white';
 			}
+		}
+		if ($bg{0} != '#' and $bg != 'transparent')
+		{
+			$bg = '#' . $bg;
 		}
 		
 		return $bg;
@@ -429,22 +440,32 @@ class AdaptiveImage
 	{
 		ini_set('memory_limit', '1024M');
 		set_time_limit(999);
-		
 		$this->Image->fixOrentation();
 		if ($this->getConf('removeWhiteSpace'))
 		{
-			$this->Image->trimColor('#FFFFFF');
-			$this->Size->calculate($this->Image, $this->getConf('width'), $this->getConf('height'), $this->getConf('fit'));
+			$this->Image->removeWhitespace();
+			$this->Size->calculate($this->Image);
 		}
 		if ($this->getConf('blur'))
 		{
 			$this->Image->blur(99);
 		}
 		
-		$bg  = $this->getBgConf();
-		$fit = $this->getConf('fit');
-		//addExtraErrorInfo('params', $this->params);
-		//addExtraErrorInfo('Size', $this->Size);
+		$bg     = $this->getBg();
+		$fit    = $this->getConf('fit');
+		$format = strtolower($this->Image->getImageFormat());
+		if (!$this->getConf('maintainTransparency')) //colorize transparent background
+		{
+			$format    = 'jpg';
+			$flattened = new Imagick();
+			$flattened->newImage($this->Image->getImageWidth(), $this->Image->getImageHeight(), $bg);
+			$flattened->compositeImage($this->Image, imagick::COMPOSITE_OVER, 0, 0);
+			$flattened->setImageFormat($format);
+			$this->Image = $flattened;
+		}
+		//$this->Image->scaleImage(1500, 300, true);
+		//$this->Size->calculate($this->Image);
+		
 		if (in_array($fit, ['size', 'fill']) && isset($this->Size->fitWidth) && isset($this->Size->fitHeight))
 		{
 			if ($fit == 'size')
@@ -454,14 +475,16 @@ class AdaptiveImage
 					if ($bg === 'transparent')
 					{
 						$this->Image->setImageBackgroundColor(new ImagickPixel('transparent'));
-						$this->Image->setImageFormat($this->getConf('transparentImageFormat'));
+						$format = $this->getConf('transparentImageFormat');
+						$this->Image->setImageFormat($format);
 					}
 					else
 					{
 						$this->Image->setImageBackgroundColor($bg);
 					}
 				}
-				$this->Image->scaleImage($this->Size->fitWidth, $this->Size->fitHeight, true);
+				//$this->Image->scaleImage($this->Size->fitWidth, $this->Size->fitHeight, true);
+				$this->Image->scaleImage($this->Size->width, $this->Size->height, true);
 			}
 			elseif ($fit == 'fill')
 			{
@@ -471,6 +494,7 @@ class AdaptiveImage
 			{
 				$this->error("fit '$fit' is not implemented");
 			}
+			
 			if ($this->getConf('fitc'))
 			{
 				$fitc = rawurldecode($this->getConf('fitc'));
@@ -582,15 +606,11 @@ class AdaptiveImage
 		{
 			$this->Image->scaleImage($this->Size->width, $this->Size->height, true);
 		}
-		
 		if ($this->getConf('cropas'))
 		{
 			$Crop = $this->getConf('cropas');
 			$this->Image->cropImage($Crop->width, $Crop->height, $Crop->x, $Crop->y);
 		}
-		
-		
-		$format = strtolower($this->Image->getImageFormat());
 		if (in_array($format, ['jpg', 'jpeg', 'webp']) and !$this->getConf('webp'))
 		{
 			$this->Image->setImageCompression(Imagick::COMPRESSION_JPEG);
@@ -615,13 +635,14 @@ class AdaptiveImage
 			//$this->Image->setOption('webp:low-memory', 'true');
 			$this->Image->setImageFormat('webp');
 			$this->Image->setImageCompressionQuality($this->getConf('quality'));
-			$this->Image->setOption('webp:method', '5');
+			$this->Image->setOption('webp:method', '6');
 			$this->Image->setOption('webp:lossless', 'false');
 		}
 		elseif ($format == 'png')
 		{
 			$this->Image->setFormat('png'); //rewrite format for transparency, etc
 		}
+		//$this->Image->setImageBackgroundColor(new ImagickPixel("red"));
 		$this->Image->stripImage();
 		
 		return true;
@@ -629,7 +650,7 @@ class AdaptiveImage
 	
 	private function setFinalPath()
 	{
-		$bg  = $this->getBgConf();
+		$bg  = $this->getBg();
 		$fit = $this->getConf('fit');
 		if ($fit == 'size' && isset($this->Size->fitWidth) && isset($this->Size->fitHeight) and $bg === 'transparent')
 		{
@@ -675,7 +696,7 @@ class AdaptiveImage
 					$width = $this->getConf('width');
 					if ($width == 'auto')
 					{
-						$width = $this->Size->finalWidth;
+						$width = $this->Size->pathWidth;
 					}
 					$a = $width;
 				}
@@ -688,7 +709,7 @@ class AdaptiveImage
 					$height = $this->getConf('height');
 					if ($height == 'auto')
 					{
-						$height = $this->Size->finalHeight;
+						$height = $this->Size->pathHeight;
 					}
 					$a .= $height;
 				}

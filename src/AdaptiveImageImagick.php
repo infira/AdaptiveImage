@@ -34,15 +34,29 @@ class AdaptiveImageImagick extends Imagick
 		}
 	}
 	
+	
 	/**
-	 * Trims color ro nearest NOT $colorToTrim
-	 *
-	 * @param string $colorToTrim
+	 * Removes whitespace around actual image
 	 */
-	public function trimColor($colorToTrim = "#FFFFFF")
+	public function removeWhitespace()
 	{
-		// Set the color to trim:
-		$this->borderImage($colorToTrim, 1, 1);
+		if (strtolower($this->getImageFormat()) == 'png')
+		{
+			$origWidth  = $this->getImageWidth();
+			$origHeight = $this->getImageHeight();
+			$this->trimColor('transparent');
+			//https://stackoverflow.com/questions/6742718/php-imagick-detect-transparency doesnt work always
+			if ($this->getImageWidth() != $origWidth or $this->getImageHeight() != $origHeight)
+			{
+				return true;
+			}
+		}
+		$this->trimColor('white');
+	}
+	
+	private function trimColor($color)
+	{
+		$this->borderImage($color, 1, 1);
 		$this->trimImage(0.1 * $this->getQuantumRange()["quantumRangeLong"]);
 		$this->setImagePage(0, 0, 0, 0);
 	}
