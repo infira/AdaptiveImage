@@ -106,17 +106,17 @@ class AdaptiveImage
 			$this->error('Destionation path not seted');
 		}
 		
-		// Make the dir if missing.
-		if (!is_dir($destPath))
-		{
-			mkdir($destPath, 0755, true);
-		}
-		if (!is_dir($destPath) || !is_writable($destPath))
-		{
-			$this->error('Failed to create destination path at: ' . $destPath);
-		}
 		if ($this->getConf('writeFile'))
 		{
+			// Make the dir if missing.
+			if (!is_dir($destPath))
+			{
+				mkdir($destPath, 0755, true);
+			}
+			if (!is_dir($destPath) || !is_writable($destPath))
+			{
+				$this->error('Failed to create destination path at: ' . $destPath);
+			}
 			$this->Image->writeImage($fp);
 			if (file_exists($fp))
 			{
@@ -470,8 +470,6 @@ class AdaptiveImage
 			$flattened->setImageFormat($format);
 			$this->Image = $flattened;
 		}
-		//$this->Image->scaleImage(1500, 300, true);
-		//$this->Size->calculate($this->Image);
 		
 		if (in_array($fit, ['size', 'fill']) && isset($this->Size->fitWidth) && isset($this->Size->fitHeight))
 		{

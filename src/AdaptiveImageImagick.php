@@ -40,6 +40,8 @@ class AdaptiveImageImagick extends Imagick
 	 */
 	public function removeWhitespace()
 	{
+		/*
+		 * In zone server this methid didint work, it trimmed the whole pictures if background is transparent
 		if (strtolower($this->getImageFormat()) == 'png')
 		{
 			$origWidth  = $this->getImageWidth();
@@ -51,6 +53,7 @@ class AdaptiveImageImagick extends Imagick
 				return true;
 			}
 		}
+		*/
 		$this->trimColor('white');
 	}
 	
