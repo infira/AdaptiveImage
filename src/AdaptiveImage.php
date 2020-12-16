@@ -28,6 +28,46 @@ class AdaptiveImage
 	 */
 	private $Image = null;
 	
+	public function __construct()
+	{
+		$this->config                         = [];
+		$this->config['width']                = 'auto';
+		$this->config['height']               = 'auto';
+		$this->config['quality']              = 80;
+		$this->config['forceCache']           = false;//overwrite file if exists
+		$this->config['removeWhiteSpace']     = false;
+		$this->config['generate']             = true;
+		$this->config['fit']                  = false; //Final image must be exacty the $width and height width backgrounds
+		$this->config['maintainTransparency'] = true;  //In case of source png maintain transparency
+		$this->config['upScale']              = true;  //If desired image size is smaller than actual image, then upscale it
+		
+		/*
+		 * fitc = fit coordinates xy
+		 * x (c = center, l = left)
+		 * y (m = middle, t = top)
+		 * OR you can provide coordinates by n,n
+		 * OR for example x-10,m that is center is calculated and then minus 10
+		 * OR for example x-10,m+20 that is center is calculated and then minus 10, middle is calculated and then added 20
+		 *
+		 * if x is negative then x is calculated from right
+		 */
+		$this->config['fitc'] = 'cm';
+		
+		$this->config['bg']                     = null; //Used only in fit
+		$this->config['writeFile']              = true;
+		$this->config['sendToBrowser']          = true;
+		$this->config['blur']                   = false;
+		$this->config['bds']                    = "";       //base dir suffix
+		$this->config['useOnlyBds']             = false;    //base dir suffix
+		$this->config['usd']                    = 'w';      //Use picture size in dir, w = width, h = height, both together can be used as well
+		$this->config['cropas']                 = false;    //crop image after scaling
+		$this->config['transparentImageFormat'] = 'png';
+		$this->config['webp']                   = false; //use webp
+		$this->config['anlc']                   = true;  //anlc = allow non letter character on cache folder
+		$this->config['fn']                     = '';    //use this as file name
+		$this->config['webp:method']            = '6';   //use this as file name
+	}
+	
 	
 	public function make($src = false, $config = null)
 	{
@@ -64,7 +104,6 @@ class AdaptiveImage
 		{
 			$this->error('SVG image is not supported.');
 		}
-		
 		
 		/* whew might the cache file be? */
 		$this->parseConfig();
@@ -254,46 +293,10 @@ class AdaptiveImage
 				}
 			}
 		}
-		
-		$default                         = [];
-		$default['width']                = 'auto';
-		$default['height']               = 'auto';
-		$default['quality']              = 80;
-		$default['forceCache']           = false;//overwrite file if exists
-		$default['removeWhiteSpace']     = false;
-		$default['generate']             = true;
-		$default['fit']                  = false; //Final image must be exacty the $width and height width backgrounds
-		$default['maintainTransparency'] = true;  //In case of source png maintain transparency
-		$default['upScale']              = true;  //If desired image size is smaller than actual image, then upscale it
-		
-		/*
-		 * fitc = fit coordinates xy
-		 * x (c = center, l = left)
-		 * y (m = middle, t = top)
-		 * OR you can provide coordinates by n,n
-		 * OR for example x-10,m that is center is calculated and then minus 10
-		 * OR for example x-10,m+20 that is center is calculated and then minus 10, middle is calculated and then added 20
-		 *
-		 * if x is negative then x is calculated from right
-		 */
-		$default['fitc'] = 'cm';
-		
-		$default['bg']                     = null; //Used only in fit
-		$default['writeFile']              = true;
-		$default['sendToBrowser']          = true;
-		$default['voidRemoveWhiteSpace']   = false;
-		$default['blur']                   = false;
-		$default['bds']                    = "";       //base dir suffix
-		$default['useOnlyBds']             = false;    //base dir suffix
-		$default['usd']                    = 'w';      //Use picture size in dir, w = width, h = height, both together can be used as well
-		$default['cropas']                 = false;    //crop image after scaling
-		$default['transparentImageFormat'] = 'png';
-		$default['webp']                   = false; //use webp
-		$default['anlc']                   = true;  //anlc = allow non letter character on cache folder
-		$default['fn']                     = '';    //use this as file name
-		$default['webp:method']            = '6';   //use this as file name
-		
-		$this->config = array_merge($default, $this->config, $configArr);
+		if (checkArray($configArr))
+		{
+			$this->config = array_merge($this->config, $configArr);
+		}
 	}
 	
 	private function parseConfig()
@@ -364,7 +367,7 @@ class AdaptiveImage
 		}
 		foreach ($this->config as $n => $v)
 		{
-			if (in_array($n, ['forceCache', 'generate', 'removeWhiteSpace', 'writeFile', 'sendToBrowser', 'voidRemoveWhiteSpace', 'blur', 'hdir', 'webp', 'useOnlyBds', 'upScale']))
+			if (in_array($n, ['forceCache', 'generate', 'removeWhiteSpace', 'writeFile', 'sendToBrowser', 'blur', 'hdir', 'webp', 'useOnlyBds', 'upScale']))
 			{
 				if ($v === '1' or $v === 'true' or $v === 1 or $v === true)
 				{
@@ -379,10 +382,6 @@ class AdaptiveImage
 		}
 		
 		$this->config['quality'] = preg_replace('/[^0-9]/', "", $this->config['quality']);
-		if ($this->config['voidRemoveWhiteSpace'])
-		{
-			$this->config['removeWhiteSpace'] = false;
-		}
 		
 		if ($this->getConf('cropas'))
 		{
@@ -616,6 +615,7 @@ class AdaptiveImage
 			$Crop = $this->getConf('cropas');
 			$this->Image->cropImage($Crop->width, $Crop->height, $Crop->x, $Crop->y);
 		}
+		
 		if (in_array($format, ['jpg', 'jpeg', 'webp']) and !$this->getConf('webp'))
 		{
 			$this->Image->setImageCompression(Imagick::COMPRESSION_JPEG);
@@ -626,10 +626,7 @@ class AdaptiveImage
 			//$this->Image->setInterlaceScheme(\Imagick::INTERLACE_JPEG);
 			//$this->Image->setInterlaceScheme(\Imagick::INTERLACE_PLANE);
 			$this->Image->setSamplingFactors(['2x2', '1x1', '1x1']); //https://stackoverflow.com/questions/27132047/how-can-i-save-a-jpg-image-in-420-colorspace-with-imagick
-			if ($format == 'webp')
-			{
-				$this->Image->setImageFormat('jpeg');
-			}
+			$this->Image->setImageFormat('jpeg');
 		}
 		elseif ($this->getConf('webp'))
 		{
@@ -665,7 +662,11 @@ class AdaptiveImage
 			}
 		}
 		
-		$format               = strtolower($this->Image->getImageFormat());
+		$format = strtolower($this->Image->getImageFormat());
+		if (!$this->getConf('maintainTransparency')) //colorize transparent background
+		{
+			$format = 'jpg';
+		}
 		$this->finalExtension = $format;
 		if (in_array($format, ['jpg', 'jpeg', 'webp']) and !$this->getConf('webp'))
 		{
