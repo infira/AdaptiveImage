@@ -420,6 +420,14 @@ class AdaptiveImage
 		return $bg;
 	}
 	
+	private function replaceTransparentBg(): bool
+	{
+		$bg     = $this->getBg();
+		$format = strtolower($this->Image->getImageFormat());
+		
+		return (!$this->getConf('maintainTransparency') and $bg != 'transparent' and !in_array($format, ['jpe', 'jpeg']));
+	}
+	
 	/**
 	 * Get conf value
 	 *
@@ -460,7 +468,7 @@ class AdaptiveImage
 		$bg     = $this->getBg();
 		$fit    = $this->getConf('fit');
 		$format = strtolower($this->Image->getImageFormat());
-		if (!$this->getConf('maintainTransparency')) //colorize transparent background
+		if ($this->replaceTransparentBg())//colorize transparent background
 		{
 			$format    = 'jpg';
 			$flattened = new Imagick();
@@ -663,7 +671,7 @@ class AdaptiveImage
 		}
 		
 		$format = strtolower($this->Image->getImageFormat());
-		if (!$this->getConf('maintainTransparency')) //colorize transparent background
+		if (!$this->replaceTransparentBg()) //colorize transparent background
 		{
 			$format = 'jpg';
 		}
