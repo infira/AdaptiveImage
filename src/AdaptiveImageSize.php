@@ -34,6 +34,7 @@ class AdaptiveImageSize
 		$size            = $file->getImageGeometry();
 		$this->srcWidth  = $size["width"];
 		$this->srcHeight = $size["height"];
+		$this->fitWidth  = $this->fitHeight = null;
 		$upScale         = $this->Ai->getConf('upScale');
 		
 		//cleanOutput(true);
@@ -75,99 +76,68 @@ class AdaptiveImageSize
 			$this->height = $desiredHeight;
 		}
 		
-		//debug($fit);
-		//debug(['src' => [$this->srcWidth, $this->srcHeight]]);
-		//debug(['size' => [$this->width, $this->height]]);
-		
+		//$this->debug("beforeCalc");
 		if ($fit)
 		{
-			$this->fitWidth  = $this->width;
-			$this->fitHeight = $this->height;
+			$this->pathWidth  = $this->fitWidth = $desiredWidth;
+			$this->pathHeight = $this->fitHeight = $desiredHeight;
 			
-			if ($fit == "fill")
+			if (!$upScale and $this->width > $this->srcWidth and $this->height > $this->srcHeight)
 			{
-				if (!$upScale and $this->width > $this->srcWidth and $this->height > $this->srcHeight)
+				//debug(1);
+				$this->width  = $this->srcWidth;
+				$this->height = $this->srcHeight;
+			}
+			elseif (!$upScale and ($this->width > $this->srcWidth || $this->height > $this->srcHeight))
+			{
+				if ($this->srcWidth > $this->width)
 				{
-					$this->width  = $this->srcWidth;
-					$this->height = $this->srcHeight;
-				}
-				elseif (!$upScale and ($this->width > $this->srcWidth || $this->height > $this->srcHeight))
-				{
-					if ($this->width > $this->srcWidth)
-					{
-						$this->width = $this->srcWidth;
-					}
-					else //$this->height > $this->srcHeight
-					{
-						$this->height = $this->srcHeight;
-					}
+					//debug(2.1);
+					$calc = $this->calcDimensions("W", $this->srcWidth, $this->srcHeight, $this->width, "auto");
 				}
 				else
 				{
-					$calc = $this->calcDimensions("W", $this->srcWidth, $this->srcHeight, $this->fitWidth, $this->fitHeight);
-					if ($calc->width >= $this->fitWidth && $calc->height >= $this->fitHeight)
-					{
-						$this->width  = $calc->width;
-						$this->height = $calc->height;
-					}
-					else
-					{
-						$calc         = $this->calcDimensions("H", $this->srcWidth, $this->srcHeight, $this->fitWidth, $this->fitHeight);
-						$this->width  = $calc->width;
-						$this->height = $calc->height;
-					}
+					//debug(2.2);
+					$calc = $this->calcDimensions("H", $this->srcWidth, $this->srcHeight, "auto", $this->height);
 				}
+				$this->width  = $calc->width;
+				$this->height = $calc->height;
 			}
-			else //fit = size
+			else
 			{
-				if (!$upScale and $this->width > $this->srcWidth and $this->height > $this->srcHeight)
+				//debug(3);
+				$calc = $this->calcDimensions("W", $this->srcWidth, $this->srcHeight, $this->fitWidth, $this->fitHeight);
+				//debug(['$calc' => $calc]);
+				if ($calc->width >= $this->fitWidth && $calc->height >= $this->fitHeight and $fit == "fill")
 				{
-					$this->width  = $this->srcWidth;
-					$this->height = $this->srcHeight;
+					//debug("1");
+					$this->width  = $calc->width;
+					$this->height = $calc->height;
 				}
-				elseif (!$upScale and ($this->width > $this->srcWidth || $this->height > $this->srcHeight))
+				elseif ($calc->width <= $this->fitWidth && $calc->height <= $this->fitHeight and $fit == "size")
 				{
-					if ($this->width > $this->srcWidth)
-					{
-						$this->width = $this->srcWidth;
-					}
-					else //$this->height > $this->srcHeight
-					{
-						$this->height = $this->srcHeight;
-					}
+					//debug("2");
+					$this->width  = $calc->width;
+					$this->height = $calc->height;
 				}
 				else
 				{
-					$calc = $this->calcDimensions("W", $this->srcWidth, $this->srcHeight, $this->fitWidth, $this->fitHeight);
-					if ($calc->width <= $this->fitWidth && $calc->height <= $this->fitHeight)
-					{
-						$this->width  = $calc->width;
-						$this->height = $calc->height;
-					}
-					else
-					{
-						$calc         = $this->calcDimensions("H", $this->srcWidth, $this->srcHeight, $this->fitWidth, $this->fitHeight);
-						$this->width  = $calc->width;
-						$this->height = $calc->height;
-					}
+					//debug("3");
+					$calc         = $this->calcDimensions("H", $this->srcWidth, $this->srcHeight, $this->fitWidth, $this->fitHeight);
+					$this->width  = $calc->width;
+					$this->height = $calc->height;
 				}
 			}
 			
-			//debug(['size' => [$this->width, $this->height]]);
-			//debug(['fit' => [$this->fitWidth, $this->height]]);
-			
-			$this->pathWidth  = $this->fitWidth;
-			$this->pathHeight = $this->fitHeight;
 		}
 		else
 		{
 			$this->pathWidth  = $this->width;
 			$this->pathHeight = $this->height;
 		}
-		//exit;
 	}
 	
-	private function calcDimensions($propFlag, $srcWidth, $srcHeight, $newWidth, $newHeight)
+	private function calcDimensions($propFlag, $srcWidth, $srcHeight, $newWidth = "auto", $newHeight = "auto")
 	{
 		$Output   = new \stdClass();
 		$propFlag = strtoupper($propFlag);
@@ -200,6 +170,27 @@ class AdaptiveImageSize
 		}
 		
 		return $Output;
+	}
+	
+	public function debug($debugName = 'sizeDbug')
+	{
+		$debug            = new \stdClass();
+		$debug->width     = $this->width;
+		$debug->height    = $this->height;
+		$debug->srcWidth  = $this->srcWidth;
+		$debug->srcHeight = $this->srcHeight;
+		//$Debug->pathWidth  = $this->pathWidth;
+		//$Debug->pathHeight = $this->pathHeight;
+		$debug->fitWidth  = $this->fitWidth;
+		$debug->fitHeight = $this->fitHeight;
+		if ($debugName)
+		{
+			debug([$debugName => $debug]);
+		}
+		else
+		{
+			debug($debug);
+		}
 	}
 }
 
