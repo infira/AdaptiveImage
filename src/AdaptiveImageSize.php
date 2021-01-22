@@ -79,8 +79,8 @@ class AdaptiveImageSize
 		//$this->debug("beforeCalc");
 		if ($fit)
 		{
-			$this->pathWidth  = $this->fitWidth = $desiredWidth;
-			$this->pathHeight = $this->fitHeight = $desiredHeight;
+			$this->pathWidth  = $this->fitWidth = $this->width;
+			$this->pathHeight = $this->fitHeight = $this->height;
 			
 			if (!$upScale and $this->width > $this->srcWidth and $this->height > $this->srcHeight)
 			{
