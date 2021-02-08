@@ -117,54 +117,38 @@ class AdaptiveImage
 			return false;
 		}
 		
+		$finalPath = $this->getFinalPath();
 		if (!$this->getConf('writeFile'))
 		{
-			$this->draw();
+			$this->draw($finalPath);
 		}
 		else
 		{
-			if (!file_exists($this->getFinalPath()))
+			if (!file_exists($finalPath))
 			{
-				$this->draw();
+				$this->draw($finalPath);
 			}
 			else
 			{
 				if ($this->getConf('forceCache'))
 				{
 					// modified, clear it
-					unlink($this->getFinalPath());
-					$this->draw();
+					unlink($finalPath);
+					$this->draw($finalPath);
 				}
 			}
 		}
 		
-		$fp       = $this->getFinalPath();
-		$destPath = dirname($fp);
-		if (empty($destPath))
-		{
-			$this->error('Destionation path not seted');
-		}
-		
 		if ($this->getConf('writeFile'))
 		{
-			// Make the dir if missing.
-			if (!is_dir($destPath))
-			{
-				mkdir($destPath, 0755, true);
-			}
-			if (!is_dir($destPath) || !is_writable($destPath))
-			{
-				$this->error('Failed to create destination path at: ' . $destPath);
-			}
-			$this->Image->writeImage($fp);
-			if (file_exists($fp))
+			if (file_exists($finalPath))
 			{
 				if ($this->getConf('sendToBrowser'))
 				{
 					header('Content-type: image/' . $this->Image->getImageFormat());
 					header('Cache-Control: private, max-age=' . $this->browserCache);
 					header('Expires: ' . gmdate('D, d M Y H:i:s', time() + $this->browserCache) . ' GMT');
-					echo file_get_contents($fp);
+					echo file_get_contents($finalPath);
 					$this->Image->clear();
 					$this->Image->destroy();
 				}
@@ -450,7 +434,7 @@ class AdaptiveImage
 	 * @throws \ImagickException
 	 * @return bool
 	 */
-	private function draw()
+	private function draw(string $finalPath)
 	{
 		ini_set('memory_limit', '1024M');
 		set_time_limit(999);
@@ -654,6 +638,27 @@ class AdaptiveImage
 		}
 		//$this->Image->setImageBackgroundColor(new ImagickPixel("red"));
 		$this->Image->stripImage();
+		if ($this->getConf('writeFile'))
+		{
+			$destPath = dirname($finalPath);
+			if (empty($destPath))
+			{
+				$this->error('Destionation path not seted');
+			}
+			
+			// Make the dir if missing.
+			if (!is_dir($destPath))
+			{
+				mkdir($destPath, 0755, true);
+			}
+			if (!is_dir($destPath) || !is_writable($destPath))
+			{
+				$this->error('Failed to create destination path at: ' . $destPath);
+			}
+			
+			
+			$this->Image->writeImage($finalPath);
+		}
 		
 		return true;
 	}
