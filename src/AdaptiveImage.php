@@ -165,7 +165,7 @@ class AdaptiveImage
 				header('Content-type: image/' . $this->Image->getImageFormat());
 				header('Cache-Control: private, max-age=' . $this->browserCache);
 				header('Expires: ' . gmdate('D, d M Y H:i:s', time() + $this->browserCache) . ' GMT');
-				echo $this->Image->getImageBlob();
+				echo $this->Image->getImagesBlob();
 				$this->Image->clear();
 				$this->Image->destroy();
 			}
@@ -810,7 +810,7 @@ class AdaptiveImage
 		header('Content-Type: image/' . $this->Image->getImageFormat());
 		header('Cache-Control: private, max-age=' . $this->browserCache);
 		header('Expires: ' . gmdate('D, d M Y H:i:s', time() + $this->browserCache) . ' GMT');
-		echo $this->Image->getImageBlob();
+		echo $this->Image->getImagesBlob();
 		exit;
 	}
 	
