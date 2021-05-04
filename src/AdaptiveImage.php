@@ -60,10 +60,9 @@ class AdaptiveImage
 		$this->config['bds']                    = "";       //base dir suffix
 		$this->config['useOnlyBds']             = false;    //base dir suffix
 		$this->config['usd']                    = 'w';      //Use picture size in dir, w = width, h = height, both together can be used as well
-		$this->config['cropas']                 = false;    //crop image after scaling
+		$this->config['crop']                 = false;    //crop image after resizing
 		$this->config['transparentImageFormat'] = 'png';
 		$this->config['webp']                   = false; //use webp
-		$this->config['anlc']                   = true;  //anlc = allow non letter character on cache folder
 		$this->config['fn']                     = '';    //use this as file name
 		$this->config['webp:method']            = '6';   //use this as file name
 	}
@@ -367,15 +366,15 @@ class AdaptiveImage
 		
 		$this->config['quality'] = preg_replace('/[^0-9]/', "", $this->config['quality']);
 		
-		if ($this->getConf('cropas'))
+		if ($this->getConf('crop'))
 		{
-			$ex                     = explode(',', $this->getConf('cropas'));
+			$ex                     = explode(',', $this->getConf('crop'));
 			$Crop                   = new \stdClass();
 			$Crop->width            = $ex[0];
 			$Crop->height           = $ex[1];
 			$Crop->x                = $ex[2];
 			$Crop->y                = $ex[3];
-			$this->config['cropas'] = $Crop;
+			$this->config['crop'] = $Crop;
 		}
 	}
 	
@@ -602,9 +601,9 @@ class AdaptiveImage
 		{
 			$this->Image->scaleImage($this->Size->width, $this->Size->height, true);
 		}
-		if ($this->getConf('cropas'))
+		if ($this->getConf('crop'))
 		{
-			$Crop = $this->getConf('cropas');
+			$Crop = $this->getConf('crop');
 			$this->Image->cropImage($Crop->width, $Crop->height, $Crop->x, $Crop->y);
 		}
 		
