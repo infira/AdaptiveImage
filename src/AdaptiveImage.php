@@ -395,7 +395,7 @@ class AdaptiveImage
 				return 'white';
 			}
 		}
-		if ($bg{0} != '#' and $bg != 'transparent')
+		if ($bg[0] != '#' and $bg != 'transparent')
 		{
 			$bg = '#' . $bg;
 		}
@@ -499,7 +499,7 @@ class AdaptiveImage
 				}
 				else
 				{
-					$ex = [$fitc{0}, $fitc{1}];
+					$ex = [$fitc[0], $fitc[1]];
 				}
 				
 				$xs  = (string)$ex[0];
@@ -523,11 +523,11 @@ class AdaptiveImage
 				$xs = preg_replace('/[a-z]/si', '', $xs);
 				if ($xs != "" and $xsl)
 				{
-					if ($xs{0} == '-')
+					if ($xs[0] == '-')
 					{
 						$x -= intval(substr($xs, 1));
 					}
-					elseif ($xs{0} == '+')
+					elseif ($xs[0] == '+')
 					{
 						$x += intval(substr($xs, 1));
 					}
@@ -537,7 +537,7 @@ class AdaptiveImage
 					}
 				}
 				
-				if ((string)$x{0} == '-')
+				if ((string)$x[0] == '-')
 				{
 					$right0 = $this->Size->width - $this->Size->fitWidth;
 					$x      = $right0 + intval($x);
@@ -566,11 +566,11 @@ class AdaptiveImage
 				$ys = preg_replace('/[a-z]/si', '', $ys);
 				if ($ys != "" and $ysl)
 				{
-					if ($ys{0} == '-')
+					if ($ys[0] == '-')
 					{
 						$y -= intval(substr($ys, 1));
 					}
-					elseif ($ys{0} == '+')
+					elseif ($ys[0] == '+')
 					{
 						$y += intval(substr($ys, 1));
 					}
@@ -580,7 +580,7 @@ class AdaptiveImage
 					}
 				}
 				
-				if ((string)$y{0} == '-')
+				if ((string)$y[0] == '-')
 				{
 					$bottom0 = $this->Size->height - $this->Size->fitHeight;
 					$y       = $bottom0 + intval($y);
