@@ -1,19 +1,16 @@
 {
-  "name"             : "infira/adaptive-image",
-  "authors"          : [
-	{
-	  "name" : "Gen Taliaru",
-	  "email": "gen@infira.ee"
-	}
+  "name": "infira/adaptive-image",
+  "authors": [
+    {
+      "name": "Gen Taliaru",
+      "email": "gen@infira.ee"
+    }
   ],
-  "prefer-stable"    : true,
+  "prefer-stable": true,
   "minimum-stability": "dev",
-  "autoload"         : {
-	"psr-4": {
-	  "Infira\\AdaptiveImage\\": "src/"
-	}
-  },
-  "require"          : {
-	"infira/utils": "1.*"
+  "autoload": {
+    "psr-4": {
+      "Infira\\AdaptiveImage\\": "src/"
+    }
   }
 }
